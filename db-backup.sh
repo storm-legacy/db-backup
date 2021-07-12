@@ -5,6 +5,7 @@
 LAST_PWD=`pwd`
 # script location for ease of file manipulating
 SCRIPT_PWD=`cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd`
+SCRIPT_SOURCE=${BASH_SOURCE[0]}
 #move to script location
 cd $SCRIPT_PWD
 
@@ -75,15 +76,22 @@ exit_script() {
 trap exit_script EXIT
 
 # encryption and decryption functions
-salt='YqaQYL6YGY64pPHtyem9UIs6zJYp5bxR9ywfWhF65uLJ2gH6QOrdVziN3pN99aQeY0Rbgf6a7KUWfDwi'
+random_salt='k0y3Nuz6uP6WsMRqdcG29etHpYhLD6eQTf7fo4hGrO2YO5BGsRs8JlagqzEA8pVqtGXFEFLJwUIzQhit'
 encrypt_passwd() {
+  salt=$2
   pass=`echo $1 | openssl enc -aes-256-cbc -md sha512 -a -pbkdf2 -iter 100000 -salt -pass pass:$salt`
   echo $pass
 }
 
 decrypt_passwd() {
+  salt=$2
   pass=`echo $1 | openssl enc -aes-256-cbc -md sha512 -a -d -pbkdf2 -iter 100000 -salt -pass pass:$salt`
   echo $pass
+}
+
+# generate random string for encrypting
+gen_random_string() {
+        cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-80} | head -n 1
 }
 
 # load mysql-bak.conf
@@ -100,14 +108,14 @@ load_sources() {
   MYSQL["port"]=$mysql_port
   MYSQL["databases"]=$mysql_databases
   MYSQL["user"]=$mysql_user
-  MYSQL["passwd"]=$(decrypt_passwd $mysql_passwd)
+  MYSQL["passwd"]=$(decrypt_passwd $mysql_passwd $random_salt)
 
   SFTP["ip"]=$sftp_ip
   SFTP["dir"]=$sftp_dir
   SFTP["user"]=$sftp_user
-  SFTP["passwd"]=$(decrypt_passwd $sftp_passwd)
+  SFTP["passwd"]=$(decrypt_passwd $sftp_passwd $random_salt)
 
-  ARCHIVE["passwd"]=$(decrypt_passwd $arch_passwd)
+  ARCHIVE["passwd"]=$(decrypt_passwd $arch_passwd $random_salt)
   ARCHIVE["backups_keep"]=$backups_keep
   ARCHIVE["keep_local"]=$keep_local
 }
@@ -279,6 +287,13 @@ init_config() {
         * ) echo "Please answer [y]es/[n]o.";;
     esac
   done
+  
+  #generate new salt
+  new_salt=$(gen_random_string)
+
+  #overwrite self with new salt
+  old_variable=$(cat $SCRIPT_SOURCE | grep random_salt= | head -n 1)
+  sed -i "s/$old_variable/random_salt=\'$new_salt\'/g" $SCRIPT_SOURCE
 
   #create config file
   echo "# MySQL configuration" > $CONFIG_DIR/mysql-bak.conf
@@ -286,16 +301,16 @@ init_config() {
   echo "mysql_port=$mysql_port" >> $CONFIG_DIR/mysql-bak.conf
   echo "mysql_databases=\"$mysql_databases\"" >> $CONFIG_DIR/mysql-bak.conf
   echo "mysql_user=$mysql_user" >> $CONFIG_DIR/mysql-bak.conf
-  echo "mysql_passwd=$(encrypt_passwd $mysql_passwd)" >> $CONFIG_DIR/mysql-bak.conf
+  echo "mysql_passwd=$(encrypt_passwd $mysql_passwd $new_salt)" >> $CONFIG_DIR/mysql-bak.conf
   echo "" >> $CONFIG_DIR/mysql-bak.conf
   echo "# SFTP configuration" >> $CONFIG_DIR/mysql-bak.conf
   echo "sftp_ip=$sftp_ip" >> $CONFIG_DIR/mysql-bak.conf
   echo "sftp_dir=$sftp_dir" >> $CONFIG_DIR/mysql-bak.conf
   echo "sftp_user=$sftp_user" >> $CONFIG_DIR/mysql-bak.conf
-  echo "sftp_passwd=$(encrypt_passwd $sftp_passwd)" >> $CONFIG_DIR/mysql-bak.conf
+  echo "sftp_passwd=$(encrypt_passwd $sftp_passwd $new_salt)" >> $CONFIG_DIR/mysql-bak.conf
   echo "" >> $CONFIG_DIR/mysql-bak.conf
   echo "# Archive" >> $CONFIG_DIR/mysql-bak.conf
-  echo "arch_passwd=$(encrypt_passwd $arch_passwd)" >> $CONFIG_DIR/mysql-bak.conf
+  echo "arch_passwd=$(encrypt_passwd $arch_passwd $new_salt)" >> $CONFIG_DIR/mysql-bak.conf
   echo "backups_keep=$backups_keep" >> $CONFIG_DIR/mysql-bak.conf
   echo "keep_local=$backups_local" >> $CONFIG_DIR/mysql-bak.conf
 
@@ -511,3 +526,4 @@ xargs rm > /dev/null 2>&1
 
 # * FINISHED
 echo -e "$COLOR_GREEN[INFO] Operation finished successfuly! $COLOR_RESET"
+
