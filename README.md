@@ -1,7 +1,7 @@
 # DB-BACKUP
-### Jest to prosty skrypt pozwalający na szybkie i wygodne utworzenie kopii zapasowej wybranych baz danych InnoDB dla serwera bazodanowego MySQL.
+Jest to prosty skrypt pozwalający na szybkie i wygodne utworzenie kopii zapasowej wybranych baz danych InnoDB dla serwera bazodanowego MySQL.
 
-## Założenia:
+### Założenia:
  - [X] Utworzenie kopii zapasowej bazy, bez potrzeby wstrzymywania jej pracy
  - [X] Utworzenie pliku *.sql pozwalającego na szybkie przywrócenie poszczególnych baz
  - [X] Szyfrowanie kopii zapasowej przed wysłaniem na serwer
@@ -11,16 +11,14 @@
 
 # KONFIGURACJA
 ## Uprawnienia użytkownika kopii zapasowej MySQL
----
-### Aby wykonać kopię zapasową, użytkownik kopii zapasowej przypisany do bazy musi posiadać uprawnienia jej odczytu, wglądu do widoków, zapisu do pliku oraz edycji wydarzeń:
+Aby wykonać kopię zapasową, użytkownik kopii zapasowej przypisany do bazy musi posiadać uprawnienia jej odczytu, wglądu do widoków, zapisu do pliku oraz edycji wydarzeń:
 ```
 mysql> REVOKE ALL ON *.* FROM 'bak-user'@'127.0.0.1';
 mysql> GRANT SELECT, SHOW VIEW, FILE, EVENT on db1.* TO 'bak-user'@'127.0.0.1';
 ```
 
 ## Folder skryptu
----
-### Aby poprawnie wykonać kopię zapasową bazy, należy umieścić skrypt - w osobnym folderze, w którym będzie znajdować się jego struktura plików oraz lokalnie zapisywanie kopie zapasowe
+Aby poprawnie wykonać kopię zapasową bazy, należy umieścić skrypt - w osobnym folderze, w którym będzie znajdować się jego struktura plików oraz lokalnie zapisywanie kopie zapasowe
 ```
 bash> sudo tree .
 .
@@ -35,27 +33,26 @@ bash> sudo tree .
         ├── db1.sql   # -> Plik *.sql kopiowanej bazy danych
         └── db2.sql
 ```
-### Aby możliwe było wykonanie kopii za pomocą wykorzystywanego w procesie narzędzia **mysqldump**, folder, w którym znajduje się skrypt musi posiadać uprawnienia zapisu dla grupy **mysql**.
+Aby możliwe było wykonanie kopii za pomocą wykorzystywanego w procesie narzędzia **mysqldump**, folder, w którym znajduje się skrypt musi posiadać uprawnienia zapisu dla grupy **mysql**.
 ```
 chown root:mysql /path/to/script/dir
 chmod 770 /path/to/script/dir         #albo 755 dla mniej bezpiecznego wariantu
 ```
 
 ## Pierwsze uruchomienie:
----
 
-#### Skrypt musi zostać **uruchomiony jako root** i posiadać **uprawnienia 700**. 
+Skrypt musi zostać **uruchomiony jako root** i posiadać **uprawnienia 700**. 
 #### **Jest to bardzo istotne, ponieważ użytkownik posiadający dostęp do skryptu będzie w stanie zdeszyfrować hasła znajdujące się w pliku konfiguracyjnym.**
 ```
 bash> sudo chmod 700 ./db-backup.sh
 ```
 
-#### Pierwsze uruchomienie skryptu
+### Komenda inicjująca:
 ```
 bash> sudo ./db-backup.sh
 ```
 
-### Podczas pierwszego uruchomienia użytkownik zostanie poproszony o podanie informacji pozwalających na podłączenie do bazy danych i serwera sftp:
+Podczas pierwszego uruchomienia użytkownik zostanie poproszony o podanie informacji pozwalających na podłączenie do bazy danych i serwera sftp:
 ```
 [WARN] Configure basic functionality of the script
 > MySQL server IP [127.0.0.1]: 127.0.0.1
@@ -74,7 +71,7 @@ bash> sudo ./db-backup.sh
 > Number of backups to keep [7]: 5
 > Keep local copy of backup? [y/n]: y
 ```
-### Następnie komunikat poprosi o potwierdzenie:
+Następnie komunikat poprosi o potwierdzenie:
 ```
 [WARN] Confirm your settings:
 
@@ -99,14 +96,13 @@ bash> sudo ./db-backup.sh
 Are those settings correct? [y/n]: y
 [INFO] Config file succesfuly created! Run script again.
 ```
-### W wypadku wprowadzenia niepoprawnych danych lub chęci ich późniejszej korekty - użytkownik może użyć komendy pozwalającej na ponownienie procesu tworzenia pliku konfiguracyjnego:
+W wypadku wprowadzenia niepoprawnych danych lub chęci ich późniejszej korekty - użytkownik może użyć komendy pozwalającej na ponownienie procesu tworzenia pliku konfiguracyjnego:
 ```
 bash> sudo ./db-backup.sh reconfigure
 ```
 
 ## Plik konfiguracyjny
----
-### Istnieje również możliwość wprowadzania pojedyńczych zmian bezpośrednio do pliku konfiguracyjnego bez potrzeby generowania konfiguracji od zera.
+Istnieje również możliwość wprowadzania pojedyńczych zmian bezpośrednio do pliku konfiguracyjnego bez potrzeby generowania konfiguracji od zera.
 ```
 bash> sudo cat /root/.mysql-bak/mysql-bak.conf
 
@@ -131,16 +127,14 @@ keep_local=true
 
 # DZIAŁANIE
 ## Start
----
-### Aby uruchomić skrypt, wystarczy go wywołać.
+Aby uruchomić skrypt, wystarczy go wywołać.
 ```
 bash> sudo ./db-backup.sh
 ```
-### **Skrypt należy uruchomić co najmniej raz w celu potwierdzenia jego działania przed skonfigurowaniem go jako zaplanowane zadanie (cron itd.)**
+**Skrypt należy uruchomić co najmniej raz w celu potwierdzenia jego działania przed skonfigurowaniem go jako zaplanowane zadanie (cron itd.)**
 
 ## Przebieg:
----
-### Na początku następuje podłączenie do bazy, które może sprawić problemy jeśli ustawienia dla serwera mysql w pliku konfiguracyjnym (*.mysql-bak.conf*) są błędne, albo grupa **mysql** nie posiada uprawnień do zapisu w folderze ze skryptem. Poprawna prodecura zrzutu bazy powinna wyglądać tak:
+Na początku następuje podłączenie do bazy, które może sprawić problemy jeśli ustawienia dla serwera mysql w pliku konfiguracyjnym (*.mysql-bak.conf*) są błędne, albo grupa **mysql** nie posiada uprawnień do zapisu w folderze ze skryptem. Poprawna prodecura zrzutu bazy powinna wyglądać tak:
 ```
 [INFO] 'db1' backup
 -- Connecting to 127.0.0.1...
@@ -161,26 +155,26 @@ bash> sudo ./db-backup.sh
 -- Releasing savepoint...
 -- Disconnecting from 127.0.0.1...
 ```
-### Następnie generowane jest zaszyfrowane hasłem podanym przy automatycznej konfiguracji archiwum **\*.tar.gz.enc**:
+Następnie generowane jest zaszyfrowane hasłem podanym przy automatycznej konfiguracji archiwum **\*.tar.gz.enc**:
 ```
 [INFO] Creating encrypted *.tar.gz.enc archive
 ```
 
-### Plik kopii od teraz znajduje się w folderze **./backups** i zależnie od opcji pozostawiania archiwum lokalnego w pliku konfiguracyjnym. Zostanie usunięty po wysłaniu na serwer, albo pozostawiony, nie przekraczając limitu archiwów
+Plik kopii od teraz znajduje się w folderze **./backups** i zależnie od opcji pozostawiania archiwum lokalnego w pliku konfiguracyjnym. Zostanie usunięty po wysłaniu na serwer, albo pozostawiony, nie przekraczając limitu archiwów
 ```
 bash> ls backups/
 total 814940
 -rw-r----- 1 root root 834491936 Jul 12 11:16 dbBak-2021-07-12_11-15-57.tar.gz.enc
 ```
 
-### Następnie zaszyfrowany plik kopii przesyłany jest za pomocą **rsync** do zdalnej lokalizacji **SFTP**
+Następnie zaszyfrowany plik kopii przesyłany jest za pomocą **rsync** do zdalnej lokalizacji **SFTP**
 ```
 [INFO] Transfering backup to SFTP server
 dbBak-2021-07-12_10-55-59.tar.gz.enc
     287,932,416  34%   12.71MB/s    0:00:42
 ```
 
-### Po zakończeniu operacji powinien wyświetlić się komunikat przedstawiający wykaz kopii (zdalnych) z zaznaczeniem nowo dodanej i usuniętych starszych kopii.
+Po zakończeniu operacji powinien wyświetlić się komunikat przedstawiający wykaz kopii (zdalnych) z zaznaczeniem nowo dodanej i usuniętych starszych kopii.
 ```
 [INFO] Server already stores 6 backup(s)!
  (-)[834.49 MB][2021-07-12 10:03:16] dbBak-2021-07-12_10-01-06.tar.gz.enc
@@ -197,18 +191,17 @@ dbBak-2021-07-12_10-55-59.tar.gz.enc
 
 # PRZYWRACANIE KOPII ZAPASOWEJ
 ## Deszyfrowanie
----
-### Żeby zdeszyfrować archiwum należy użyć tej komendy oraz wprowadzić hasło podane przy konfiguracji skryptu:
+Żeby zdeszyfrować archiwum należy użyć tej komendy oraz wprowadzić hasło podane przy konfiguracji skryptu:
 ```
 bash> openssl enc -aes-256-cbc -md sha512 -pbkdf2 -iter 10000 -salt -d -in dbBak-XXXX-XX-XX_XX-XX-XX.tar.gz.enc -out /lokalizacja/twoja_nazwa.tar.gz
 
 enter aes-256-cbc decryption password:
 ```
-### Gdzie:
+Gdzie:
 - dbBak-XXXX-XX-XX_XX-XX-XX **.tar.gz.enc** -> **zaszyfrowane** archiwum
 - /lokalizacja/twoja_nazwa **.tar.gz** -> **odszyfrowane** archiwum docelowe
 
-### W wypadku problemów z uprawnieniami:
+#### W wypadku problemów z uprawnieniami:
 ```
 bash> sudo chown root:$USER dbBak-XXXX-XX-XX_XX-XX-XX.tar.gz.enc
 bash> sudo chmod 640 dbBak-XXXX-XX-XX_XX-XX-XX.tar.gz.enc
@@ -216,13 +209,12 @@ bash> sudo chmod 640 dbBak-XXXX-XX-XX_XX-XX-XX.tar.gz.enc
 
 
 ## Rozpakowywanie archiwum
----
-### Potem zawartość archiwum można wyeksportować do dowolnej innej lokalizacji **(musi istnieć)**
+Potem zawartość archiwum można wyeksportować do dowolnej innej lokalizacji **(musi istnieć)**
 ```
 bash> tar -xzvf /lokalizacja/twoja_nazwa.tar.gz -C /dowolna/inna/lokalizacja
 ```
 
-### Aby ostatecznie przywrócić kopię z pliku ***.sql**, np. za pomocą komendy **mysql**:
+Aby ostatecznie przywrócić kopię z pliku ***.sql**, np. za pomocą komendy **mysql**:
 ```
 bash> mysql -u uzytkownikZUprawnieniami -p < /dowolna/inna/lokalizacja/db1.sql
 ```
