@@ -1,3 +1,6 @@
+# WARNING
+Project isn't actively maintained and is most likely buggy as heck. It can be useful baseline for improved versions.
+
 # DB-BACKUP
 Jest to prosty skrypt pozwalający na szybkie i wygodne utworzenie kopii zapasowej wybranych baz danych InnoDB dla serwera bazodanowego MySQL.
 
